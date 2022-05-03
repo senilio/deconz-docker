@@ -33,11 +33,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # Install deCONZ dependencies
 RUN apt-get update && \
-    apt-get install -y \
-	gosu \
+    apt-get install --no-install-recommends --yes \
+        gosu \
         curl \
         kmod \
-	libatomic1 \
+        libatomic1 \
         libcap2-bin \
         libqt5core5a \
         libqt5gui5 \
@@ -46,28 +46,25 @@ RUN apt-get update && \
         libqt5sql5 \
         libqt5websockets5 \
         libqt5widgets5 \
-	libqt5qml5 \
+        libqt5qml5 \
         libssl1.1 \
         lsof \
         sqlite3 \
-        tigervnc-standalone-server \
-        tigervnc-common \
-        novnc \
-        websockify \
         openbox \
         xfonts-base \
-        xfonts-scalable && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+        xfonts-scalable \
+        novnc \
+        x11vnc \
+        xvfb
 
 # Workaround required on amd64 to address issue #292
 RUN if [ "${TARGETPLATFORM}" = "linux/amd64" ] ; then \
-    apt-get update && \
-    apt-get install -y \
-        binutils && \
+    apt-get install -y binutils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5 ; fi
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Add start.sh and Conbee udev data; set execute permissions
 COPY root /

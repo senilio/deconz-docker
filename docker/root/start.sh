@@ -66,29 +66,29 @@ fi
 Xvfb :0 -screen 0 1024x768x16 -listen tcp -ac &
 
 # start x11vnc
-x11vnc -forever -shared
+x11vnc -forever -shared &
 
-if [ "$DECONZ_VNC_MODE" != 0 ]; then
-    if [ "$DECONZ_VNC_PORT" -lt 5900 ]; then
-        echo "[deconzcommunity/deconz] ERROR - VNC port must be 5900 or greater!"
-        exit 1
-    fi
-
-    DECONZ_VNC_DISPLAY=:$(($DECONZ_VNC_PORT - 5900))
-    echo "[deconzcommunity/deconz] VNC port: $DECONZ_VNC_PORT"
-
-    if [ ! -e /opt/deCONZ/vnc ]; then
-        mkdir -p /opt/deCONZ/vnc
-    fi
-
-    ln -sfT /opt/deCONZ/vnc /home/deconz/.vnc
-    chown deconz:deconz /home/deconz/.vnc
-    chown -R deconz:deconz /opt/deCONZ
-
-    # Set VNC password
-    if [ "$DECONZ_VNC_PASSWORD_FILE" != 0 ] && [ -f "$DECONZ_VNC_PASSWORD_FILE" ]; then
-        DECONZ_VNC_PASSWORD=$(cat $DECONZ_VNC_PASSWORD_FILE)
-    fi
+# if [ "$DECONZ_VNC_MODE" != 0 ]; then
+#     if [ "$DECONZ_VNC_PORT" -lt 5900 ]; then
+#         echo "[deconzcommunity/deconz] ERROR - VNC port must be 5900 or greater!"
+#         exit 1
+#     fi
+#
+#     DECONZ_VNC_DISPLAY=:$(($DECONZ_VNC_PORT - 5900))
+#     echo "[deconzcommunity/deconz] VNC port: $DECONZ_VNC_PORT"
+#
+#     if [ ! -e /opt/deCONZ/vnc ]; then
+#         mkdir -p /opt/deCONZ/vnc
+#     fi
+#
+#     ln -sfT /opt/deCONZ/vnc /home/deconz/.vnc
+#     chown deconz:deconz /home/deconz/.vnc
+#     chown -R deconz:deconz /opt/deCONZ
+#
+#     # Set VNC password
+#     if [ "$DECONZ_VNC_PASSWORD_FILE" != 0 ] && [ -f "$DECONZ_VNC_PASSWORD_FILE" ]; then
+#         DECONZ_VNC_PASSWORD=$(cat $DECONZ_VNC_PASSWORD_FILE)
+#     fi
 
 #    echo "$DECONZ_VNC_PASSWORD" | tigervncpasswd -f > /opt/deCONZ/vnc/passwd
 #    chmod 600 /opt/deCONZ/vnc/passwd
@@ -107,38 +107,38 @@ if [ "$DECONZ_VNC_MODE" != 0 ]; then
 #    gosu deconz tigervncserver -SecurityTypes VncAuth,TLSVnc "$DECONZ_VNC_DISPLAY"
 
     # Export VNC display variable
-    export DISPLAY=$DECONZ_VNC_DISPLAY
-
-    if [ "$DECONZ_NOVNC_PORT" = 0 ]; then
-        echo "[deconzcommunity/deconz] noVNC Disabled"
-    elif [ "$DECONZ_NOVNC_PORT" -lt 6080 ]; then
-        echo "[deconzcommunity/deconz] ERROR - NOVNC port must be 6080 or greater!"
-        exit 1
-    fi
-
-    # Assert valid SSL certificate
-    NOVNC_CERT="/opt/deCONZ/vnc/novnc.pem"
-    if [ -f "$NOVNC_CERT" ]; then
-        openssl x509 -noout -in "$NOVNC_CERT" -checkend 0 > /dev/null
-        if [ $? != 0 ]; then
-            echo "[deconzcommunity/deconz] The noVNC SSL cert has expired; generating a new certificate."
-            rm "$NOVNC_CERT"
-        fi
-    fi
-
-    if [ ! -f "$NOVNC_CERT" ]; then
-      openssl req -x509 -nodes -newkey rsa:2048 -keyout "$NOVNC_CERT" -out "$NOVNC_CERT" -days 365 -subj "/CN=deconz"
-    fi
-
-    chown deconz:deconz $NOVNC_CERT
-
-    #Start noVNC
-    gosu deconz websockify -D --web=/usr/share/novnc/ --cert="$NOVNC_CERT" $DECONZ_NOVNC_PORT localhost:$DECONZ_VNC_PORT
-    echo "[deconzcommunity/deconz] NOVNC port: $DECONZ_NOVNC_PORT"
-else
-    echo "[deconzcommunity/deconz] VNC Disabled"
-    DECONZ_OPTS="$DECONZ_OPTS -platform minimal"
-fi
+#     export DISPLAY=$DECONZ_VNC_DISPLAY
+#
+#     if [ "$DECONZ_NOVNC_PORT" = 0 ]; then
+#         echo "[deconzcommunity/deconz] noVNC Disabled"
+#     elif [ "$DECONZ_NOVNC_PORT" -lt 6080 ]; then
+#         echo "[deconzcommunity/deconz] ERROR - NOVNC port must be 6080 or greater!"
+#         exit 1
+#     fi
+#
+#     # Assert valid SSL certificate
+#     NOVNC_CERT="/opt/deCONZ/vnc/novnc.pem"
+#     if [ -f "$NOVNC_CERT" ]; then
+#         openssl x509 -noout -in "$NOVNC_CERT" -checkend 0 > /dev/null
+#         if [ $? != 0 ]; then
+#             echo "[deconzcommunity/deconz] The noVNC SSL cert has expired; generating a new certificate."
+#             rm "$NOVNC_CERT"
+#         fi
+#     fi
+#
+#     if [ ! -f "$NOVNC_CERT" ]; then
+#       openssl req -x509 -nodes -newkey rsa:2048 -keyout "$NOVNC_CERT" -out "$NOVNC_CERT" -days 365 -subj "/CN=deconz"
+#     fi
+#
+#     chown deconz:deconz $NOVNC_CERT
+#
+#     #Start noVNC
+#     gosu deconz websockify -D --web=/usr/share/novnc/ --cert="$NOVNC_CERT" $DECONZ_NOVNC_PORT localhost:$DECONZ_VNC_PORT
+#     echo "[deconzcommunity/deconz] NOVNC port: $DECONZ_NOVNC_PORT"
+# else
+#     echo "[deconzcommunity/deconz] VNC Disabled"
+#     DECONZ_OPTS="$DECONZ_OPTS -platform minimal"
+# fi
 
 if [ "$DECONZ_DEVICE" != 0 ]; then
     DECONZ_OPTS="$DECONZ_OPTS --dev=$DECONZ_DEVICE"
